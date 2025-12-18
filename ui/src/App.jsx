@@ -35,39 +35,55 @@ function App() {
     setIsProcessing(true)
     setUploadProgress(0)
 
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval)
-          return 90
-        }
-        return prev + 10
-      })
-    }, 200)
+    try {
+      // Create FormData to send file to backend
+      const formData = new FormData()
+      formData.append('file', file)
 
-    // Simulate API call to OpenAI
-    setTimeout(() => {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 300)
+
+      // Call Flask backend API
+      const response = await fetch('http://localhost:5000/api/process', {
+        method: 'POST',
+        body: formData,
+      })
+
       clearInterval(progressInterval)
       setUploadProgress(100)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to process file')
+      }
+
+      const data = await response.json()
       
-      // Mock results
+      // Format results for display
       setResults({
-        summary: "Meeting with the development team discussing Q1 roadmap. Key topics included: new feature prioritization, technical debt management, and sprint planning for the next quarter. The team agreed on focusing on user authentication improvements and mobile responsiveness.",
-        followUps: [
-          "Schedule follow-up meeting with design team for UI/UX review",
-          "Create Jira tickets for prioritized features",
-          "Send meeting notes to stakeholders by EOD",
-          "Review technical debt backlog with senior engineers",
-          "Prepare sprint planning document for next week"
-        ],
+        summary: data.summary,
+        followUps: data.followUps || [],
+        transcript: data.transcript,
         timestamp: new Date().toLocaleString(),
-        duration: file.type.startsWith('video') ? "5:32" : "3:45"
+        duration: file.type.startsWith('video') ? "Processing complete" : "Processing complete"
       })
       
       setIsProcessing(false)
       setUploadProgress(0)
-    }, 3000)
+    } catch (error) {
+      console.error('Error processing file:', error)
+      alert(`Error: ${error.message}. Make sure the backend server is running.`)
+      setIsProcessing(false)
+      setUploadProgress(0)
+    }
   }
 
   const handleClear = () => {
