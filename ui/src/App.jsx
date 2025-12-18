@@ -95,6 +95,69 @@ function App() {
     }
   }
 
+  const handleDownloadSummary = () => {
+    if (!results) return
+
+    // Create text content
+    const content = `MEETING SUMMARY
+Generated: ${results.timestamp}
+
+===========================================
+
+SUMMARY
+${results.summary}
+
+===========================================
+
+FOLLOW-UP ACTIONS
+${results.followUps.map((item, index) => `${index + 1}. ${item}`).join('\n')}
+
+===========================================
+
+TRANSCRIPT
+${results.transcript || 'N/A'}
+`
+
+    // Create blob and download
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `meeting-summary-${new Date().toISOString().slice(0, 10)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const handleSendToSlack = async () => {
+    if (!results) return
+
+    try {
+      const response = await fetch('http://localhost:5000/api/slack/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summary: results.summary,
+          followUps: results.followUps,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to send to Slack')
+      }
+
+      const data = await response.json()
+      alert(`✓ Successfully sent to Slack channel: ${data.channel}`)
+    } catch (error) {
+      console.error('Error sending to Slack:', error)
+      alert(`Error sending to Slack: ${error.message}`)
+    }
+  }
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -231,8 +294,12 @@ function App() {
             </div>
 
             <div className="action-buttons">
-              <button className="secondary-btn">📥 Export PDF</button>
-              <button className="secondary-btn">📧 Email Summary</button>
+              <button className="secondary-btn" onClick={handleDownloadSummary}>
+                📥 Download Summary
+              </button>
+              <button className="secondary-btn" onClick={handleSendToSlack}>
+                💬 Send to Slack
+              </button>
               <button className="primary-btn" onClick={handleClear}>
                 Process Another File
               </button>

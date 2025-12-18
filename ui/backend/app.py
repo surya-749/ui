@@ -1,14 +1,29 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import sys
 import google.generativeai as genai
 from werkzeug.utils import secure_filename
 import tempfile
 from dotenv import load_dotenv
 import json
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
+
+# Add integration-features to path
+integration_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'integration-features'))
+sys.path.insert(0, integration_path)
+
+# Import Slack integration
+try:
+    from slack_integration import send_to_slack
+    slack_available = True
+    print(f"✓ Slack integration loaded")
+except ImportError as e:
+    slack_available = False
+    print(f"⚠️  Slack integration not available: {e}")
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -117,6 +132,30 @@ Respond ONLY with valid JSON in this exact format:
         print(f"Error processing file: {str(e)}")
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
+@app.route('/api/slack/send', methods=['POST'])
+def send_slack_message():
+    """Send summary and follow-ups to Slack"""
+    if not slack_available:
+        return jsonify({'error': 'Slack integration not available'}), 503
+    
+    try:
+        data = request.get_json()
+        
+        if not data or 'summary' not in data or 'followUps' not in data:
+            return jsonify({'error': 'Missing summary or followUps'}), 400
+        
+        summary = data['summary']
+        follow_ups = data['followUps']
+        
+        # Send to Slack
+        result = send_to_slack(summary, follow_ups)
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        print(f"Error sending to Slack: {str(e)}")
+        return jsonify({'error': f'Error sending to Slack: {str(e)}'}), 500
+
 @app.route('/api/process-text', methods=['POST'])
 def process_text():
     """Process text input directly"""
@@ -175,4 +214,9 @@ if __name__ == '__main__':
     print("Starting Smart Office Automation Agent Backend (Google Gemini)...")
     print(f"Allowed file types: {', '.join(ALLOWED_EXTENSIONS)}")
     print(f"Max file size: {MAX_FILE_SIZE / (1024*1024)}MB")
+    
+    if slack_available:
+        print("✓ Slack integration enabled")
+    else:
+        print("⚠️  Slack integration not available")
     app.run(debug=True, port=5000, host='0.0.0.0')
