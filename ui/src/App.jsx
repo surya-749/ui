@@ -99,74 +99,112 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-content">
-          <h1>Smart Office Automation Agent</h1>
-          <p>Transform your audio/video meetings into actionable insights</p>
+          <div className="brand">
+            <div className="brand-mark" aria-hidden="true" />
+            <span className="brand-name">Smart Office</span>
+          </div>
+          <nav className="header-actions" aria-label="Primary">
+            <a className="header-link" href="#add-docs">Add Docs</a>
+            <a className="header-link" href="#results">Results</a>
+          </nav>
         </div>
       </header>
 
       <main className="main-content">
-        <div className="upload-section">
-          <div 
-            className={`drop-zone ${file ? 'has-file' : ''}`}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*,video/*"
-              onChange={handleFileSelect}
-              style={{ display: 'none' }}
-            />
-            
-            {!file ? (
-              <div className="drop-zone-content">
-                <div className="upload-icon">📁</div>
-                <h3>Drop your audio/video file here</h3>
-                <p>or click to browse</p>
-                <small>Supports: MP3, MP4, WAV, M4A, MOV, AVI</small>
-              </div>
-            ) : (
-              <div className="file-info">
-                <div className="file-icon">
-                  {file.type.startsWith('video') ? '🎥' : '🎵'}
-                </div>
-                <div className="file-details">
-                  <h3>{file.name}</h3>
-                  <p>{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                </div>
-                <button className="clear-btn" onClick={(e) => {
-                  e.stopPropagation()
-                  handleClear()
-                }}>✕</button>
-              </div>
-            )}
+        <section className="hero">
+          <div className="hero-left">
+            <p className="hero-kicker">Smart Office Automation Agent</p>
+            <h1 className="hero-title">Add docs. Get a summary. Action the follow‑ups.</h1>
+            <p className="hero-subtitle">
+              Upload a meeting recording or voice note. The agent extracts a clean summary and the next steps you can act on.
+            </p>
+            <ul className="hero-points">
+              <li>Audio & video supported</li>
+              <li>Clear, structured follow‑ups</li>
+              <li>Fast turnaround for busy teams</li>
+            </ul>
+            <p className="hero-hint">Tip: drop a file on the right to continue.</p>
           </div>
 
-          {file && !isProcessing && !results && (
-            <button className="process-btn" onClick={handleProcess}>
-              Process with OpenAI
-            </button>
-          )}
-
-          {isProcessing && (
-            <div className="processing-status">
-              <div className="spinner"></div>
-              <p>Processing your file with AI...</p>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
+          <div className="hero-right" id="add-docs">
+            <div className="add-docs-card">
+              <div className="card-top">
+                <div>
+                  <h2 className="card-title">Add Docs</h2>
+                  <p className="card-subtitle">Upload audio/video to generate summary + follow‑ups.</p>
+                </div>
+                <div className="card-badge" aria-label="Secure">Private</div>
               </div>
-              <small>{uploadProgress}% complete</small>
+
+              <div
+                className={`drop-zone ${file ? 'has-file' : ''}`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onClick={() => fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                aria-label="Upload audio or video"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/*,video/*"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
+
+                {!file ? (
+                  <div className="drop-zone-content">
+                    <div className="upload-icon" aria-hidden="true">⬆</div>
+                    <h3>Drop your file here</h3>
+                    <p>or click to browse</p>
+                    <small>MP3, MP4, WAV, M4A, WEBM (max 25MB)</small>
+                  </div>
+                ) : (
+                  <div className="file-info">
+                    <div className="file-icon" aria-hidden="true">
+                      {file.type.startsWith('video') ? '🎥' : '🎵'}
+                    </div>
+                    <div className="file-details">
+                      <h3>{file.name}</h3>
+                      <p>{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                    <button
+                      className="clear-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleClear()
+                      }}
+                      aria-label="Remove file"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {file && !isProcessing && !results && (
+                <button className="process-btn" onClick={handleProcess}>
+                  Process with AI
+                </button>
+              )}
+
+              {isProcessing && (
+                <div className="processing-status">
+                  <div className="spinner" aria-hidden="true"></div>
+                  <p>Processing…</p>
+                  <div className="progress-bar" aria-label="Upload progress">
+                    <div className="progress-fill" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                  <small>{uploadProgress}% complete</small>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </section>
 
         {results && (
-          <div className="results-section">
+          <div className="results-section" id="results">
             <div className="results-header">
               <h2>📊 Results</h2>
               <div className="results-meta">
@@ -204,7 +242,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Powered by OpenAI API | Secure & Confidential</p>
+        <p>Secure & confidential processing</p>
       </footer>
     </div>
   )
