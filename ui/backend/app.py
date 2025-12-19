@@ -69,6 +69,18 @@ def process_media():
         if not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type. Supported formats: mp3, mp4, mpeg, mpga, m4a, wav, webm'}), 400
         
+        # Get summary length preference
+        summary_length = request.form.get('summaryLength', 'medium')
+        
+        # Define length instructions
+        length_instructions = {
+            'short': '2-3 sentences, only the most critical points',
+            'medium': '4-6 sentences covering main topics',
+            'long': 'comprehensive summary with detailed coverage of all topics discussed'
+        }
+        
+        length_instruction = length_instructions.get(summary_length, length_instructions['medium'])
+        
         # Save file temporarily
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -90,18 +102,18 @@ def process_media():
                 raise Exception("File processing failed")
             
             # Analyze audio/video with Gemini
-            print("Analyzing with Gemini...")
-            prompt = """Analyze this audio/video file and provide:
+            print(f"Analyzing with Gemini (summary length: {summary_length})...")
+            prompt = f"""Analyze this audio/video file and provide:
 1. A detailed transcription of all spoken content
-2. A concise summary of the key points discussed
+2. A {summary_length} summary ({length_instruction})
 3. A list of 3-5 actionable follow-up items or next steps
 
 Respond ONLY with valid JSON in this exact format:
-{
+{{
   "transcript": "full transcription here",
   "summary": "summary here",
   "followUps": ["item 1", "item 2", "item 3"]
-}"""
+}}"""
             
             response = model.generate_content([uploaded_file, prompt])
             

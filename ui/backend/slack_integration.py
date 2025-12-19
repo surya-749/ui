@@ -1,13 +1,14 @@
 import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from datetime import datetime, timedelta
 
 def send_to_slack(summary, follow_ups):
     """
-    Send meeting summary and follow-ups to Slack channel
+    Send action items to Slack channel with task and deadline
     
     Args:
-        summary (str): Meeting summary text
+        summary (str): Meeting summary text (not displayed)
         follow_ups (list): List of follow-up action items
     
     Returns:
@@ -24,8 +25,15 @@ def send_to_slack(summary, follow_ups):
     
     client = WebClient(token=slack_token)
     
-    # Format follow-ups as bullet points
-    follow_ups_text = "\n".join([f"• {item}" for item in follow_ups])
+    # Calculate default deadline (3 days from now)
+    default_deadline = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
+    
+    # Format action items with task and deadline
+    action_items = []
+    for idx, item in enumerate(follow_ups, 1):
+        action_items.append(f"*{idx}.* {item}\n   📅 *Deadline:* {default_deadline}")
+    
+    action_items_text = "\n\n".join(action_items)
     
     # Create message blocks for better formatting
     blocks = [
@@ -33,7 +41,7 @@ def send_to_slack(summary, follow_ups):
             "type": "header",
             "text": {
                 "type": "plain_text",
-                "text": "📋 Meeting Summary",
+                "text": "✅ Action Items",
                 "emoji": True
             }
         },
@@ -41,17 +49,7 @@ def send_to_slack(summary, follow_ups):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*Summary:*\n{summary}"
-            }
-        },
-        {
-            "type": "divider"
-        },
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*✅ Follow-up Actions:*\n{follow_ups_text}"
+                "text": action_items_text
             }
         }
     ]
@@ -60,12 +58,12 @@ def send_to_slack(summary, follow_ups):
         response = client.chat_postMessage(
             channel=slack_channel,
             blocks=blocks,
-            text=f"Meeting Summary: {summary}"  # Fallback text for notifications
+            text=f"Action Items from Meeting"  # Fallback text for notifications
         )
         
         return {
             "success": True,
-            "message": "Successfully sent to Slack",
+            "message": "Successfully sent action items to Slack",
             "channel": slack_channel,
             "timestamp": response['ts']
         }

@@ -6,6 +6,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [summaryLength, setSummaryLength] = useState('medium')
   const fileInputRef = useRef(null)
 
   const handleFileSelect = (e) => {
@@ -39,6 +40,7 @@ function App() {
       // Create FormData to send file to backend
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('summaryLength', summaryLength)
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -247,9 +249,24 @@ ${results.transcript || 'N/A'}
               </div>
 
               {file && !isProcessing && !results && (
-                <button className="process-btn" onClick={handleProcess}>
-                  Process with AI
-                </button>
+                <>
+                  <div className="summary-length-selector">
+                    <label htmlFor="summary-length">Summary Length:</label>
+                    <select 
+                      id="summary-length"
+                      value={summaryLength} 
+                      onChange={(e) => setSummaryLength(e.target.value)}
+                      className="length-dropdown"
+                    >
+                      <option value="short">Short</option>
+                      <option value="medium">Medium</option>
+                      <option value="long">Long</option>
+                    </select>
+                  </div>
+                  <button className="process-btn" onClick={handleProcess}>
+                    Process with AI
+                  </button>
+                </>
               )}
 
               {isProcessing && (
@@ -308,9 +325,7 @@ ${results.transcript || 'N/A'}
         )}
       </main>
 
-      <footer className="app-footer">
-        <p>Secure & confidential processing</p>
-      </footer>
+      
     </div>
   )
 }
